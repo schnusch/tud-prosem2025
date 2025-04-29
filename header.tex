@@ -1,0 +1,33 @@
+%\setbeamertemplate{footline}[page number]
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows,positioning}
+\definecolor{yellow}{HTML}{aa5500}
+\definecolor{cyan}{HTML}{00aaaa}
+\definecolor{green}{HTML}{00aa00}
+\tikzset{%
+    base/.style   = {rectangle, draw=black, text centered, font=\ttfamily},
+    head/.style   = {base,                  fill=cyan!30},
+    branch/.style = {base,                  fill=green!30},
+    commit/.style = {base, rounded corners, fill=yellow!30},
+    tree/.style   = {base, rounded corners, fill=red!30},
+    blob/.style   = {base, rounded corners, fill=gray!30},
+    % TODO
+    index/.style   = {base},
+    command/.style = {base, draw=none, text=green},
+}
+
+%% see beamerinnerthemedefault.sty
+
+% Section page: default
+
+\setbeamertemplate{section page}{
+  \begingroup
+    \centering
+%    {\usebeamerfont{section name}\usebeamercolor[fg]{section name}\sectionname~\insertsectionnumber}
+%    \vskip1em\par
+    \begin{beamercolorbox}[sep=12pt,center]{section title}
+      \usebeamerfont{section title}\insertsection\par
+    \end{beamercolorbox}
+  \endgroup
+}

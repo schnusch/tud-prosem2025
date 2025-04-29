@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+
+
+def get_info(path):
+    st = os.lstat(path)
+    try:
+        fp = open(path, "rb")
+    except IsADirectoryError:
+        digest = None
+    else:
+        try:
+            h = hashlib.sha1()
+            for buf in iter(lambda: fp.read(4096), b""):
+                h.update(buf)
+        finally:
+            fp.close()
+        digest = h.hexdigest()
+    return [path, st.st_mode, digest]
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("-s", action="store_true")
+    args = p.parse_args()
+
+    info = []
+    for root, dirnames, filenames in os.walk("."):
+        info.append(get_info(root))
+        for filename in filenames:
+            path = os.path.join(root, filename)
+            info.append(get_info(path))
+
+    if args.s:
+        with open("../files.json", "w", encoding="utf-8") as fp:
+            json.dump(sorted(info), fp, indent=2, separators=(",", ": "))
+            fp.write("\n")
+    else:
+        with open("../files.json", "r", encoding="utf-8") as fp:
+            old_info = json.load(fp)
+        changed = []
+        for f in info:
+            if f not in old_info:
+                assert f[0].startswith("./")
+                changed.append(f[0][2:])
+        if changed:
+            subprocess.run(
+                ["ls", "--color=always", "-1dp", "--", *changed],
+                check=True,
+            )
