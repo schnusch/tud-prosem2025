@@ -185,7 +185,7 @@ async def run_job(md: TextIO, texpath: str, commands):
         tex.write("\n")
         tex.write(
             # r"\adjustbox{max width=\linewidth,max totalheight=\textheight -2em}{\BUseVerbatim{VerbCode}}"
-            r"\scalebox{.7}{\BUseVerbatim{VerbCode}}"
+            r"\scalebox{.75}{\BUseVerbatim{VerbCode}}"
         )
         tex.write("\n")
 

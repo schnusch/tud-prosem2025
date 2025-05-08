@@ -1,6 +1,7 @@
 theme: Boadilla
 
-title: How Git stores a repository
-subtitle: Proseminar Operating Systems
+title: Proseminar Operating Systems
+subtitle: >-
+  Git: “a content-addressable filesystem, used to track directory trees”
 institute: TU Dresden
 date: 2025-05-09

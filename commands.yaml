@@ -1,4 +1,4 @@
-- title: Git overview
+- title: Intro
   markdown: |
     ```{=latex}
     \iffalse
@@ -13,165 +13,204 @@
 
     ```{=latex}
     \fi
+    \note{* license dispute}
+    \note{* explain distributed}
+    \note{* CVS, SVN}
     ```
 
-      * estd. 2005 by Linus Torvalds to manage Linux source code
+      * motivation for creating Git:
 
-      * most-popular version control system
+          * Linux source code was managed by BitKeeper
 
-      * distributed version control system
+          * in 2005 BitKeeper revoked its free license
 
-          * every repository is a complete mirror
+      * Git:
 
-- title: linear history
+          * estd. 2005 by Linus Torvalds
+
+          * handed off to Junio Hamano
+
+          * distributed version control system
+
+#    > "It's not an SCM, it's a distribution and archival mechanism. I bet you could make a reasonable SCM on top of it, though. Another way of looking at it is to say that it's really a content-addressable filesystem, used to track directory trees."[^trackdirectorytrees]
+#
+#    [^trackdirectorytrees]: <https://marc.info/?l=linux-kernel&m=111293537202443&w=2>
+#
+#      * most popular version control system[^popularity]
+#
+#    [^popularity]: <https://survey.stackoverflow.co/2022/#version-control-version-control-system>
+
+#- title: linear history
+#  multi:
+#  - markdown: |
+#      ```{=latex}
+#      \begin{center}
+#        \begin{tikzpicture}[align=center]
+#          \node (cli) {%
+#            \begin{minipage}{16em}%
+#      ```
+#  - run:
+#    - silent: &linear
+#      - git init .
+#      - git commit --allow-empty -m '#1'
+#      - git commit --allow-empty -m '#2'
+#      - git commit --allow-empty -m '#3'
+#    - git log --oneline
+#  - markdown: |
+#      ```{=latex}
+#            \end{minipage}%
+#          };
+#          \node (head)    [below right = 2em and 1em of cli.center, head] {HEAD};
+#          \node (main)    [below = 1em of head,    branch] {main};
+#          \node (7f6e1e2) [right = 1em of main,    commit] {\#3};
+#          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
+#          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
+#          \draw[->] (head) -- (main);
+#          \draw[->] (main) -- (7f6e1e2);
+#          \draw[->] (7f6e1e2) -- (c1e9a09);
+#          \draw[->] (c1e9a09) -- (e0bd6dd);
+#        \end{tikzpicture}
+#      \end{center}
+#      ```
+
+#- title: branched history
+#  multi:
+#  - markdown: |
+#      ```{=latex}
+#      \begin{center}
+#        \begin{tikzpicture}[align=center]
+#          \node (cli) {%
+#            \begin{minipage}{16em}%
+#      ```
+#  - run:
+#    - silent: &branched
+#      - *linear
+#      - git init .
+#      - git commit --allow-empty -m '#1'
+#      - git commit --allow-empty -m '#2'
+#      - git commit --allow-empty -m '#3'
+#      - git checkout -B feature HEAD~1
+#      - git commit --allow-empty -m '#4'
+#    - git log --all --graph --oneline
+#  - markdown: |
+#      ```{=latex}
+#            \end{minipage}%
+#          };
+#          \node (head)    [below right = 2em and 3em of cli.center, head] {HEAD};
+#          \node (feature) [below = 1em of head,    branch] {feature};
+#          \node (2a38091) [right = 1em of feature, commit] {\#4};
+#          \node (7f6e1e2) [right = 1em of 2a38091, commit] {\#3};
+#          \node (main)    [right = 1em of 7f6e1e2, branch] {main};
+#          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
+#          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
+#          \draw[->] (head) -- (feature);
+#          \draw[->] (feature) -- (2a38091);
+#          \draw[->] (2a38091) -- (c1e9a09);
+#          \draw[->] (main) -- (7f6e1e2);
+#          \draw[->] (7f6e1e2) -- (c1e9a09);
+#          \draw[->] (c1e9a09) -- (e0bd6dd);
+#        \end{tikzpicture}
+#      \end{center}
+#      ```
+
+- title: Commit Graph
   multi:
-  - markdown: |
-      ```{=latex}
-      \begin{center}
-        \begin{tikzpicture}[align=center]
-          \node (cli) {%
-            \begin{minipage}{16em}%
-      ```
-  - run:
-    - silent: &linear
-      - git init .
-      - git commit --allow-empty -m '#1'
-      - git commit --allow-empty -m '#2'
-      - git commit --allow-empty -m '#3'
-    - git log --oneline
-  - markdown: |
-      ```{=latex}
-            \end{minipage}%
-          };
-          \node (head)    [below right = 2em and 1em of cli.center, head] {HEAD};
-          \node (main)    [below = 1em of head,    branch] {main};
-          \node (7f6e1e2) [right = 1em of main,    commit] {\#3};
-          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
-          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
-          \draw[->] (head) -- (main);
-          \draw[->] (main) -- (7f6e1e2);
-          \draw[->] (7f6e1e2) -- (c1e9a09);
-          \draw[->] (c1e9a09) -- (e0bd6dd);
-        \end{tikzpicture}
-      \end{center}
-      ```
-
-- title: branched history
-  multi:
-  - markdown: |
-      ```{=latex}
-      \begin{center}
-        \begin{tikzpicture}[align=center]
-          \node (cli) {%
-            \begin{minipage}{16em}%
-      ```
-  - run:
-    - silent: &branched
-      - *linear
-      - git checkout -B feature HEAD~1
-      - git commit --allow-empty -m '#4'
-    - git log --all --graph --oneline
-  - markdown: |
-      ```{=latex}
-            \end{minipage}%
-          };
-          \node (head)    [below right = 2em and 3em of cli.center, head] {HEAD};
-          \node (feature) [below = 1em of head,    branch] {feature};
-          \node (2a38091) [right = 1em of feature, commit] {\#4};
-          \node (7f6e1e2) [right = 1em of 2a38091, commit] {\#3};
-          \node (main)    [right = 1em of 7f6e1e2, branch] {main};
-          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
-          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
-          \draw[->] (head) -- (feature);
-          \draw[->] (feature) -- (2a38091);
-          \draw[->] (2a38091) -- (c1e9a09);
-          \draw[->] (main) -- (7f6e1e2);
-          \draw[->] (7f6e1e2) -- (c1e9a09);
-          \draw[->] (c1e9a09) -- (e0bd6dd);
-        \end{tikzpicture}
-      \end{center}
-      ```
-
-- title: merged history
-  multi:
-  - markdown: |
-      ```{=latex}
-      \begin{center}
-        \begin{tikzpicture}[align=center]
-          \node (cli) {%
-            \begin{minipage}{20em}%
-      ```
+#  - markdown: |
+#      ```{=latex}
+#      \begin{center}
+#        \begin{tikzpicture}[align=center]
+#          \node (cli) {%
+#            \begin{minipage}{20em}%
+#      ```
   - run:
     - silent:
-      - *branched
-      - git checkout main
-    - git merge feature
-    - git log --all --graph --oneline
-  - markdown: |
-      ```{=latex}
-            \end{minipage}%
-          };
-          \node (head)    [below right = 2em and 3em of cli.center, head] {HEAD};
-          \node (main)    [below = 1em of head,    branch] {main};
-          \node (b178e56) [right = 1em of main,    commit] {Merge...};
-          \node (7f6e1e2) [below = 1em of b178e56, commit] {\#3};
-          \node (2a38091) [right = 1em of 7f6e1e2, commit] {\#4};
-          \node (feature) [right = 1em of 2a38091, branch] {feature};
-          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
-          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
-          \draw[->] (head) -- (main);
-          \draw[->] (main) -- (b178e56);
-          \draw[->] (b178e56) -- (7f6e1e2);
-          \draw[->] (b178e56) -- (2a38091);
-          \draw[->] (feature) -- (2a38091);
-          \draw[->] (2a38091) -- (c1e9a09);
-          \draw[->] (7f6e1e2) -- (c1e9a09);
-          \draw[->] (c1e9a09) -- (e0bd6dd);
-        \end{tikzpicture}
-      \end{center}
-      ```
-
-- title: rebased history
-  multi:
+      - silent: &branched
+        - git init .
+        - git commit --allow-empty -m '#1'
+        - git commit --allow-empty -m '#2'
+        - git commit --allow-empty -m '#3'
+        - git checkout -B feature HEAD~1
+        - git commit --allow-empty -m '#4'
+        - git checkout main
+      - git merge feature
+#    - git log --all --graph --oneline
   - markdown: |
       ```{=latex}
       \begin{center}
-        \begin{tikzpicture}[align=center]
-          \node (cli) {%
-            \begin{minipage}{20em}%
-      ```
-  - run:
-    - silent: *branched
-    - git log --all --graph --oneline
-    - git rebase --onto main feature~1
-    - git log --oneline
-  - markdown: |
-      ```{=latex}
-            \end{minipage}%
-          };
-          \node (head)    [below right = 2.5em and 4em of cli.center, head] {HEAD};
-          \node (feature) [below = 1em of head,    branch] {feature};
-          \node (main)    [below = 1em of feature, branch] {main};
-          \node (78aee1a) [right = 1em of feature, commit] {\#4};
-          \node (7f6e1e2) [below = 1em of 78aee1a, commit] {\#3};
-          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
-          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
-          \draw[->] (head) -- (feature);
-          \draw[->] (feature) -- (78aee1a);
-          \draw[->] (78aee1a) -- (7f6e1e2);
-          \draw[->] (main) -- (7f6e1e2);
-          \draw[->] (7f6e1e2) -- (c1e9a09);
-          \draw[->] (c1e9a09) -- (e0bd6dd);
-
-          \node (2a38091)     [right = 1em of 7f6e1e2,     commit, opacity=0.5] {\#4};
-          \node (old_feature) [right = 1em of 2a38091,     branch, opacity=0.5] {feature};
-          \node (old_head)    [above = 1em of old_feature, head,   opacity=0.5] {HEAD};
-          \draw[->,opacity=0.5] (old_head)    -- (old_feature);
-          \draw[->,opacity=0.5] (old_feature) -- (2a38091);
-          \draw[->,opacity=0.5] (2a38091)     -- (c1e9a09);
-        \end{tikzpicture}
+        \adjustbox{width=\linewidth,max totalheight=\textheight -3em}{%
+          \begin{tikzpicture}[align=center]
+            \node (a) [                  commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (b) [right = 2em of a, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (c) [right = 2em of b, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (d) [right = 2em of c, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (e) [right = 2em of d, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (f) [above = 2em of c, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (g) [below = 2em of d, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (h) [above = 2em of d, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \node (i) [right = 7em of g, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+            \draw[->, thick] (b) -- (a);
+            \draw[->, thick] (c) -- (b);
+            \draw[->, thick] (d) -- (c);
+            \draw[->, thick] (e) -- (d);
+            \draw[->, thick] (f) -- (b);
+            \draw[->, thick] (d) -- (f);
+            \draw[->, thick] (g) -- (c);
+            \draw[->, thick] (i) -- (g);
+            \draw[->, thick] (h) -- (f);
+            \node (feature-a) [above = 2em of h, branch] {branch A};
+            \node (main)      [above = 2em of e, branch] {main};
+            \node (feature-b) [above = 2em of i, branch] {branch B};
+            \draw[->, thick] (feature-a) -- (h);
+            \draw[->, thick] (main)      -- (e);
+            \draw[->, thick] (feature-b) -- (i);
+          \end{tikzpicture}%
+        }
       \end{center}
+      \note{* branches}
+      \note{* merge commit}
       ```
+
+#- title: rebased history
+#  multi:
+#  - markdown: |
+#      ```{=latex}
+#      \begin{center}
+#        \begin{tikzpicture}[align=center]
+#          \node (cli) {%
+#            \begin{minipage}{20em}%
+#      ```
+#  - run:
+#    - silent: *branched
+#    - git log --all --graph --oneline
+#    - git rebase --onto main feature~1
+#    - git log --oneline
+#  - markdown: |
+#      ```{=latex}
+#            \end{minipage}%
+#          };
+#          \node (head)    [below right = 2.5em and 4em of cli.center, head] {HEAD};
+#          \node (feature) [below = 1em of head,    branch] {feature};
+#          \node (main)    [below = 1em of feature, branch] {main};
+#          \node (78aee1a) [right = 1em of feature, commit] {\#4};
+#          \node (7f6e1e2) [below = 1em of 78aee1a, commit] {\#3};
+#          \node (c1e9a09) [below = 1em of 7f6e1e2, commit] {\#2};
+#          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
+#          \draw[->] (head) -- (feature);
+#          \draw[->] (feature) -- (78aee1a);
+#          \draw[->] (78aee1a) -- (7f6e1e2);
+#          \draw[->] (main) -- (7f6e1e2);
+#          \draw[->] (7f6e1e2) -- (c1e9a09);
+#          \draw[->] (c1e9a09) -- (e0bd6dd);
+#
+#          \node (2a38091)     [right = 1em of 7f6e1e2,     commit, opacity=0.5] {\#4};
+#          \node (old_feature) [right = 1em of 2a38091,     branch, opacity=0.5] {feature};
+#          \node (old_head)    [above = 1em of old_feature, head,   opacity=0.5] {HEAD};
+#          \draw[->,opacity=0.5] (old_head)    -- (old_feature);
+#          \draw[->,opacity=0.5] (old_feature) -- (2a38091);
+#          \draw[->,opacity=0.5] (2a38091)     -- (c1e9a09);
+#        \end{tikzpicture}
+#      \end{center}
+#      ```
 
 - title: But how is it stored?
   level: 1
@@ -190,77 +229,168 @@
   - markdown: |
       ```{=latex}
       }
+      \note{* config}
+      \note{* hooks}
       ```
-- title: git init – cleaned up
-  run: &rm
-  - silent:
-    - what-changed -s
-  - git init .
-  - rm -r .git/branches .git/description .git/hooks .git/info
-  - what-changed
+- title: DIY git init & .git/HEAD
+  multi:
+  - run: &rm
+    - silent:
+      - what-changed -s
+    - |
+      mkdir .git
+      echo 'ref: refs/heads/main' > .git/HEAD
+      mkdir .git/objects
+      mkdir .git/refs
+    - what-changed
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run:
+    - silent: *rm
+    - git status
+  - markdown: |
+      ```{=latex}
+      \note{* HEAD -> refs/heads/main branch}
+      \note{* branches .git/refs/heads/}
+      \note{* symlink}
+      ```
 
 #- title: .git/config
 #  run:
 #  - silent: *rm
 #  - cat .git/config
 
-- title: .git/HEAD
-  run: &head
-  - silent: *rm
-#  - what-changed
-  - cat .git/HEAD
-  - git status
-  - |-
-    rm .git/HEAD
-    ln -s refs/heads/main .git/HEAD
-    ls -l .git/HEAD
-  - git status
-
 - title: Let's add a commit.
   level: 1
 
 - title: git commit
-  run: &commit
-  - silent:
-    - *rm
-    - git config core.logallrefupdates false
-  - &do-commit1
+  multi:
+  - run: &commit-step-1
+    - silent:
+      - *rm
+      - git config core.logallrefupdates false
     - echo 'Hello World!' > hello.txt
     - silent:
       - what-changed -s
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run: &commit-step-2
+    - silent: *commit-step-1
     - git add hello.txt
-    #- find-ls -1p
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run: &commit-step-3
+    - silent: *commit-step-2
     - git commit -m 'initial commit'
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run: &commit
+    - silent: *commit-step-3
     - git log --patch
+  - markdown: |
+      ```{=latex}
+      \note{* HEAD -> main}
+      \note{* main has 1 commit}
+      \note{* commit added 1 file}
+      ```
 
 - title: What happened?
-  run: &no-index
-  - silent: *commit
-#  - rm .git/COMMIT_EDITMSG .git/index
-  - what-changed
-#  - cat .git/COMMIT_EDITMSG
-  - cat .git/HEAD
-  - cat .git/refs/heads/main
-  - git log
+  multi:
+  - run: &no-index
+    - silent:
+      - *commit
+      - rm .git/COMMIT_EDITMSG #.git/index
+    - what-changed
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run:
+    - silent: *no-index
+#    - cat .git/COMMIT_EDITMSG
+    - cat .git/HEAD
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run:
+    - silent: *no-index
+    - cat .git/refs/heads/main
+#    - git log
+  - markdown: |
+      ```{=latex}
+      \note{* REMIND HEAD -> main}
+      \note{* commit hash}
+      ```
 
-- title: ".git/objects/: commit"
-  run:
-  - silent: *no-index
-  - file .git/objects/73/1c740*
-  - zlib-flate -uncompress < .git/objects/73/1c740* | xxd | head -n 8
-  - zlib-flate -uncompress < .git/objects/73/1c740* | dd bs=1 skip=11
-  - date -d @315532800
+- title: ".git/objects/: commit & git cat-file"
+  multi:
+  - run:
+    - silent: *no-index
+    - file .git/objects/73/1c740*
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run:
+    - silent: *no-index
+    - zlib-cat -v .git/objects/73/1c740*
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run:
+    - silent: *no-index
+    - date -d @315532800
+  - markdown: |
+      ```{=latex}
+      \pause
+      \vspace{1em}%
+      \hrule
+      ```
+  - run:
+    - silent: *no-index
+    - git cat-file -p 731c740
+  - markdown: |
+      ```{=latex}
+      \note{* let's find out}
+      \note{* EXPLAIN zlib-cat}
+      \note{* "commit 201" (size)}
+      \note{* EXPLAIN simple header}
+      \note{* author vs committer}
+      \note{* order of fields later}
+      ```
 
 - title: ".git/objects/: tree & git ls-tree"
   multi:
   - run:
     - silent: *no-index
-    - zlib-flate -uncompress < .git/objects/58/1caa0* | xxd
+    - zlib-cat -v --tree .git/objects/58/1caa0*
+  - markdown: |
+      ```{=latex}
+      \pause
+      \vspace{1em}%
+      \hrule
+      ```
+  - run:
+    - silent: *no-index
     - git ls-tree 581caa0
   - markdown: |
+      ```{=latex}
+      \pause
+      ```
+
       | mode[^inode] |     file type       |
       |-------------:|:--------------------|
-      |   `040000`   | directory           |
+      |    `40000`   | directory           |
       |   `100644`   | non-executable file |
       |   `100755`   | executable file     |
       |   `120000`   | symlink             |
@@ -268,36 +398,61 @@
 
       [^inode]: see manpage [`inode(7)`](https://man7.org/linux/man-pages/man7/inode.7.html)
 
+      ```{=latex}
+      \note{* "tree 37" (size)}
+      \note{* binary format}
+      \note{* matching hash}
+      \note{* st_mode from Linux}
+      ```
+
 - title: ".git/objects/: blob"
-  run:
-  - silent: *no-index
-  - zlib-flate -uncompress < .git/objects/98/0a0d5* | xxd
+  multi:
+  - run:
+    - silent: *no-index
+    - zlib-cat -v .git/objects/98/0a0d5*
+  - markdown: |
+      ```{=latex}
+      \pause
+      \vspace{1em}%
+      \hrule
+      ```
+  - run:
+    - silent: *no-index
+    - git cat-file -p 980a0d5
+  - markdown: |
+      ```{=latex}
+      \note{* "blob 13" (size)}
+      ```
 
-- title: git cat-file – read git objects
-  run:
-  - silent: *no-index
-  - what-changed
-  - git cat-file -p 731c740
-  - git cat-file -p 581caa0
-  - git cat-file -p 980a0d5
-
-- title: objects graph
-  markdown: |
-    ```{=latex}
-    \begin{center}
+- title: Object Graph
+  multi:
+  - markdown: |
+      ```{=latex}
       \begin{tikzpicture}[align=center]
-        \node (head)    [                        head  ] {HEAD};
-        \node (main)    [below = 1em of head,    branch] {refs/heads/main};
-        \node (731c740) [below = 1em of main,    commit]  {commit 731c740};
-        \node (581caa0) [below = 3em of 731c740, tree  ]  {tree 581caa0};
-        \node (980a0d5) [below = 3em of 581caa0, blob  ]  {blob 980a0d5};
+        \node (shell) {%
+      ```
+  - run:
+    - silent:
+      - *commit
+      - rm .git/index .git/COMMIT_EDITMSG
+      - echo >> .git/HEAD
+    - what-changed
+  - markdown: |
+      ```{=latex}
+        };
+        \node (head)    [above right = 6em and 3em of shell.east, head  ] {HEAD};
+        \node (main)    [below = 1em of head,       branch] {refs/heads/main};
+        \node (731c740) [below = 1em of main,       commit] {commit 731c740};
+        \node (581caa0) [below = 3em of 731c740,    tree  ] {tree 581caa0};
+        \node (980a0d5) [below = 3em of 581caa0,    blob  ] {blob 980a0d5};
         \draw[->] (head) -- (main);
         \draw[->] (main) -- (731c740);
         \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
         \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
       \end{tikzpicture}
-    \end{center}
-    ```
+
+      \note{* path <-> graph}
+      ```
 
 #- title: git tag --no-annotate
 #  run:
@@ -327,29 +482,135 @@
     - zlib-flate -uncompress < .git/objects/58/1caa0* | sha1sum
     - zlib-flate -uncompress < .git/objects/98/0a0d5* | sha1sum
   - markdown: |
-      * each object's path is derived from a cryptographic hash of it's contents
+      ```{=latex}
+      \pause
+      \vspace{1em}%
+      \hrule
+      ```
 
-        * content-addressable
+      * content-addressable
 
-      * Merkle[^merkle] ~~tree~~ directed acyclic graphs
+          * each object's path is derived from a cryptographic hash of it's contents
+          * equal name $\iff$ equal content
+          * lock free
+          * simply merge `.git/objects/` (just copy or rsync[^rsync])
 
-        * integrity check
+      ```{=latex}
+      \pause
+      ```
+
+      * Merkle tree[^merkle]
+
+          * tree/commit contains hashes of connected objects
 
       [^merkle]: <https://en.wikipedia.org/wiki/Merkle_tree>
+      [^rsync]: <https://marc.info/?l=linux-kernel&m=111297551321018&w=2>
 
-- title: semantic equivalence?
+      ```{=latex}
+      \note{* lock free}
+      \note{* automatic deduplication}
+      \note{* immutable}
+      \note{* IF collision free hash}
+      \note{* mention SHA256}
+      ```
+
+- title: |-
+    content-addressable storage: semantic equivalence?
   markdown: |
     Equivalent object should have the same SHA-1 hash (should be byte-for-byte identical).
 
       * commit: fixed order of commit headers[^write_commit_tree]
 
-      * tree: sort entries by name[^write_tree]
+        ```{=latex}
+        \pause
+
+        \begin{SaveVerbatim}[commandchars=\\\{\}]{VerbCode}
+        tree 581caa0fe56cf01dc028cc0b089d364993e046b6
+        author schnusch <schnusch@users.noreply.github.com> 315532800 +0100
+        committer schnusch <schnusch@users.noreply.github.com> 315532800 +0100
+
+        initial commit
+        \end{SaveVerbatim}
+        \scalebox{.75}{\BUseVerbatim{VerbCode}}
+
+        \note{* REMIND commit}
+
+        \pause
+        ```
+
+      * tree: sort directory entries by name[^write_tree]
 
     [^write_commit_tree]: <https://github.com/git/git/blob/v2.47.2/commit.c#L1648-L1689>
     [^write_tree]: <https://github.com/git/git/blob/v2.47.2/builtin/mktree.c#L40-L67>
 
+- title: Let's add another commit, but with plumbing commands.
+  level: 1
+
+- title: porcelain vs. plumbing
+  markdown: |
+    ```{=latex}
+    \begin{center}
+      \adjustbox{max width=\linewidth,max totalheight=\textheight}{%
+        \begin{tikzpicture}[align=center]
+          \node (git-add)    [command] at (-10em,  0  ) {git add};
+          \node (9f592eb)    [blob   ] at (  0  ,  0  ) {blob 9f592eb};
+          \node (index)      [index  ] at (  0  , -4em) {.git/index};
+
+          \draw[->] (git-add)    -- (9f592eb);
+          \draw[->] (git-add)    -- (index);
+
+          \pause
+
+          \node (git-commit) [command] at (-10em, -8em) {git commit};
+          \node (0014ced)    [tree   ] at (  0  , -8em) {tree 0014ced};
+          \node (93c9cc0)    [commit ] at (  0  ,-12em) {commit 93c9cc0};
+          \node (main)       [branch ] at (  0  ,-16em) {refs/heads/main};
+          %\node (head)       [head   ] at (  0  ,-20em) {HEAD};
+
+          \draw[->] (9f592eb)    -- (git-commit);
+          \draw[->] (index)      -- (git-commit);
+          %\draw[->] (head)       -- (git-commit);
+          \draw[->] (git-commit) -- (0014ced);
+          \draw[->] (git-commit) -- (93c9cc0);
+          \draw[->] (git-commit) -- (main);
+
+          \pause
+
+          \node (git-hash-object) [command] at (10em,  0  ) {git hash-object -w};
+          \draw[->] (git-hash-object) -- (9f592eb);
+
+          \pause
+
+          \node (git-mktree)      [command] at (10em, -8em) {git mktree};
+          \draw[->] (9f592eb)         -- (git-mktree);
+          \draw[->] (git-mktree)      -- (0014ced);
+
+          \pause
+
+          \node (git-commit-tree) [command] at (10em,-12em) {git commit-tree};
+          \draw[->] (0014ced)         -- (git-commit-tree);
+          \draw[->] (git-commit-tree) -- (93c9cc0);
+
+          \pause
+
+          \node (git-update-ref)  [command] at (10em,-16em) {git update-ref};
+          \draw[->] (93c9cc0)         -- (git-update-ref);
+          \draw[->] (git-update-ref)  -- (main);
+
+        \end{tikzpicture}%
+      }
+    \end{center}
+
+    \note{* 2 Befehle = 4 Dateien}
+    \note{* index}
+    ```
+
 - title: git commit – plumbing
   multi:
+  - markdown: |
+      ```{=latex}
+      \vskip 0pt plus 1filll
+      ```
   - run: &hunter2
     - silent: *no-index
     - echo hunter2 > password.txt
@@ -357,43 +618,92 @@
       - what-changed -s
   - markdown: |
       ```{=latex}
+      \vskip 0pt plus 1filll
       \begin{center}
         \begin{tikzpicture}[align=center]
           \node (731c740) [                        commit] {commit 731c740};
-          \node (main)    [above = 1em of 731c740, branch] {refs/heads/main};
-          \node (head)    [above = 1em of main,    head  ] {HEAD};
           \node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
           \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
-          \draw[->] (head) -- (main);
-          \draw[->] (main) -- (731c740);
           \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
           \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
+          \begin{scope}[opacity=0]
+            \node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
+            \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
+            \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
+            \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
+            \draw[->] (7f4ea99) -- node [fill=white] {tree}         (08baea6);
+            \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
+            \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
+            \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+          \end{scope}
+          \node (old_main) [above = 1em of 731c740,  branch] {refs/heads/main};
+          \node (old_head) [above = 1em of old_main, head  ] {HEAD};
+          \draw[->] (old_head) -- (old_main);
+          \draw[->] (old_main) -- (731c740);
+          \begin{scope}[opacity=0]
+            \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
+            \node (head)    [above = 1em of main,    head  ] {HEAD};
+            \draw[->] (head) -- (main);
+            \draw[->] (main) -- (7f4ea99);
+          \end{scope}
         \end{tikzpicture}
       \end{center}
+      \vspace*{.5em}
+
+      \note{* worktree not repo}
       ```
 - multi:
+  - markdown: |
+      ```{=latex}
+      \vskip 0pt plus 1filll
+      ```
   - run: &hash-object
     - silent: *hunter2
     - git hash-object -w password.txt
 #    - (printf 'blob 8\0'; cat password.txt) | sha1sum
   - markdown: |
       ```{=latex}
+      \vskip 0pt plus 1filll
       \begin{center}
         \begin{tikzpicture}[align=center]
           \node (731c740) [                        commit] {commit 731c740};
-          \node (main)    [above = 1em of 731c740, branch] {refs/heads/main};
-          \node (head)    [above = 1em of main,    head  ] {HEAD};
           \node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
           \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
-          \draw[->] (head) -- (main);
-          \draw[->] (main) -- (731c740);
           \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
           \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
-          \node (9f592eb) [left  = 8em of 980a0d5, blob  ] {blob 9f592eb};
+          \begin{scope}[opacity=0]
+            \node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
+            \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
+          \end{scope}
+          \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
+          \begin{scope}[opacity=0]
+            \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
+            \draw[->] (7f4ea99) -- node [fill=white] {tree}         (08baea6);
+            \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
+            \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
+            \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+          \end{scope}
+          \node (old_main) [above = 1em of 731c740,  branch] {refs/heads/main};
+          \node (old_head) [above = 1em of old_main, head  ] {HEAD};
+          \draw[->] (old_head) -- (old_main);
+          \draw[->] (old_main) -- (731c740);
+          \begin{scope}[opacity=0]
+            \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
+            \node (head)    [above = 1em of main,    head  ] {HEAD};
+            \draw[->] (head) -- (main);
+            \draw[->] (main) -- (7f4ea99);
+          \end{scope}
         \end{tikzpicture}
       \end{center}
+      \vspace*{.5em}
+
+      \note{* add object}
       ```
 - multi:
+  - markdown: |
+      ```{=latex}
+      \vskip 0pt plus 1filll
+      ```
   - run: &mktree
     - silent: *hash-object
     - |-
@@ -402,34 +712,52 @@
       100644 blob 980a0d5f19a64b4b30a87d4206aade58726b60e3	world.txt
       040000 tree 581caa0fe56cf01dc028cc0b089d364993e046b6	old
       eof
-#    - |-
-#      git mktree << eof
-#      040000 tree 581caa0fe56cf01dc028cc0b089d364993e046b6	old
-#      100644 blob 980a0d5f19a64b4b30a87d4206aade58726b60e3	world.txt
-#      100644 blob 9f592eb7d58cbfd81f80bb57846e1e7c4c2e4223	password.txt
-#      eof
   - markdown: |
       ```{=latex}
+      \vskip 0pt plus 1filll
       \begin{center}
         \begin{tikzpicture}[align=center]
           \node (731c740) [                        commit] {commit 731c740};
-          \node (main)    [above = 1em of 731c740, branch] {refs/heads/main};
-          \node (head)    [above = 1em of main,    head  ] {HEAD};
           \node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
           \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
-          \draw[->] (head) -- (main);
-          \draw[->] (main) -- (731c740);
           \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
           \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
-          \node (9f592eb) [left  = 8em of 980a0d5, blob  ] {blob 9f592eb};
-          \node (08baea6) [above = 3em of 9f592eb, tree  ] {tree 08baea6};
+          \begin{scope}[opacity=0]
+            \node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
+          \end{scope}
+          \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
+          \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
+          \begin{scope}[opacity=0]
+            \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
+            \draw[->] (7f4ea99) -- node [fill=white] {tree}         (08baea6);
+          \end{scope}
           \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
           \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
           \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+          \node (old_main) [above = 1em of 731c740,  branch] {refs/heads/main};
+          \node (old_head) [above = 1em of old_main, head  ] {HEAD};
+          \draw[->] (old_head) -- (old_main);
+          \draw[->] (old_main) -- (731c740);
+          \begin{scope}[opacity=0]
+            \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
+            \node (head)    [above = 1em of main,    head  ] {HEAD};
+            \draw[->] (head) -- (main);
+            \draw[->] (main) -- (7f4ea99);
+          \end{scope}
         \end{tikzpicture}
       \end{center}
+      \vspace*{.5em}
+
+      \note{* add directory}
+      \note{* EXPLAIN structure}
+      \note{* . => old/}
+      \note{* `ln old/hello.txt world.txt`}
       ```
 - multi:
+  - markdown: |
+      ```{=latex}
+      \vskip 0pt plus 1filll
+      ```
   - run: &commit-tree
     - silent: *mktree
     - |-
@@ -442,18 +770,15 @@
         git commit-tree -m 'second commit' -p 731c740 08baea6
   - markdown: |
       ```{=latex}
+      \vskip 0pt plus 1filll
       \begin{center}
         \begin{tikzpicture}[align=center]
           \node (731c740) [                        commit] {commit 731c740};
-          \node (main)    [above = 1em of 731c740, branch] {refs/heads/main};
-          \node (head)    [left  = 1em of main,    head  ] {HEAD};
           \node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
           \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
-          \draw[->] (head) -- (main);
-          \draw[->] (main) -- (731c740);
           \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
           \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
-          \node (7f4ea99) [left  = 8em of 731c740, commit] {commit 7f4ea99};
+          \node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
           \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
           \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
           \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
@@ -461,15 +786,35 @@
           \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
           \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
           \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+          \node (old_main) [above = 1em of 731c740,  branch] {refs/heads/main};
+          \node (old_head) [above = 1em of old_main, head  ] {HEAD};
+          \draw[->] (old_head) -- (old_main);
+          \draw[->] (old_main) -- (731c740);
+          \begin{scope}[opacity=0]
+            \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
+            \node (head)    [above = 1em of main,    head  ] {HEAD};
+            \draw[->] (head) -- (main);
+            \draw[->] (main) -- (7f4ea99);
+          \end{scope}
         \end{tikzpicture}
       \end{center}
+      \vspace*{.5em}
+
+      \note{* REMIND commit fields}
+      \note{* IMPORTANT parent `-p`}
+      \note{* merge parents}
       ```
 - multi:
+  - markdown: |
+      ```{=latex}
+      \vskip 0pt plus 1filll
+      ```
   - run: &commit2
     - silent: *commit-tree
     - git update-ref HEAD 7f4ea99
   - markdown: |
       ```{=latex}
+      \vskip 0pt plus 1filll
       \begin{center}
         \begin{tikzpicture}[align=center]
           \node (731c740) [                        commit] {commit 731c740};
@@ -477,7 +822,7 @@
           \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
           \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
           \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
-          \node (7f4ea99) [left  = 8em of 731c740, commit] {commit 7f4ea99};
+          \node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
           \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
           \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
           \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
@@ -485,84 +830,140 @@
           \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
           \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
           \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+          \begin{scope}[opacity=0]
+            \node (old_main) [above = 1em of 731c740,  branch] {refs/heads/main};
+            \node (old_head) [above = 1em of old_main, head  ] {HEAD};
+            \draw[->] (old_head) -- (old_main);
+            \draw[->] (old_main) -- (731c740);
+          \end{scope}
           \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
           \node (head)    [above = 1em of main,    head  ] {HEAD};
           \draw[->] (head) -- (main);
           \draw[->] (main) -- (7f4ea99);
         \end{tikzpicture}
       \end{center}
+      \vspace*{.5em}
+
+      \note{* update branch}
+      \note{* why HEAD not "main"}
       ```
 
-- title: did it work?
-  run:
-  - silent: *commit2
-  - git log --stat
-  #- git restore world.txt
-  #- ls -1p
-- title: what happened?
-  run:
-  - silent: *commit2
-  - what-changed
-  - cat .git/HEAD
-- run:
-  - silent: *commit2
-#  - git cat-file --batch-all-objects --batch-check
-  - cat .git/refs/heads/main
-  - git cat-file -p 7f4ea99
-  - git cat-file -p 08baea6
-  - git cat-file -p 9f592eb
-  #- git cat-file -p 980a0d5
-
-- title: semantic equivalence vs. merge commit
+- title: Did it work?
   multi:
+  - run:
+    - silent: *commit2
+    - git log --stat
+    #- git restore world.txt
+    #- ls -1p
   - markdown: |
       ```{=latex}
-      \begin{center}
-        \begin{tikzpicture}[align=center]
-          \node (cli) {%
-            \begin{minipage}{16em}%
+      \note{* HEAD -> main}
+      \note{* main -> 7fea...}
+      \note{* rename}
+      \note{* world.txt}
+      ```
+
+- title: What happened?
+  multi:
+  - run:
+    - silent: *commit2
+    - what-changed
+#    - cat .git/HEAD
+  - markdown: |
+      ```{=latex}
+      \note{* 08 = tree}
+      \note{* 7f = commit}
+      \note{* 9f = blob}
+      \note{* branch update}
+      \note{* reused old/hello.txt}
+      \note{* reused world.txt}
+      \note{* can skip next}
+      ```
+
+- multi:
+  - run:
+    - silent: *commit2
+#    - git cat-file --batch-all-objects --batch-check
+    - cat .git/refs/heads/main
+  - markdown: |
+      ```{=latex}
+      \pause
       ```
   - run:
-    - silent:
-      - *branched
-#    - git log --all --graph --oneline
-    - |-
-      git checkout main
-      git merge 2a38091 -m 'merge'
-    - |-
-      git checkout feature
-      git merge 7f6e1e2 -m 'merge'
-#    - git log --all --graph --oneline
-    - git diff --no-index <(git cat-file -p main) <(git cat-file -p feature)
+    - silent: *commit2
+    - git cat-file -p 7f4ea99
   - markdown: |
       ```{=latex}
-            \end{minipage}%
-          };
-          \node (c1e9a09) [above right = 3.5em and 15em of cli.center, commit] {\#2};
-          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
-          \node (7f6e1e2) [above left  = 1em of c1e9a09, commit] {\#3};
-          \node (2a38091) [above right = 1em of c1e9a09, commit] {\#4};
-          \node (merge1)  [above = 1em of 7f6e1e2, commit] {merge};
-          \node (merge2)  [above = 1em of 2a38091, commit] {merge};
-          \node (main)    [above = 1em of merge1,  branch] {main};
-          \node (feature) [above = 1em of merge2,  branch] {feature};
-
-          %\node (head)    [below right = 2em and 3em of cli.center, head] {HEAD};
-          %\draw[->] (head) -- (feature);
-
-          \draw[->] (main) -- (merge1);
-          \draw[->] (merge1) -- (2a38091);
-          \draw[->] (merge1) -- (7f6e1e2);
-          \draw[->] (7f6e1e2) -- (c1e9a09);
-          \draw[->] (c1e9a09) -- (e0bd6dd);
-
-          \draw[->] (feature) -- (merge2);
-          \draw[->] (merge2) -- (7f6e1e2);
-          \draw[->] (merge2) -- (2a38091);
-          \draw[->] (2a38091) -- (c1e9a09);
-        \end{tikzpicture}
-      \end{center}
+      \pause
       ```
+  - run:
+    - silent: *commit2
+    - git cat-file -p 08baea6
+  - markdown: |
+      ```{=latex}
+      \pause
+      ```
+  - run:
+    - silent: *commit2
+    - git cat-file -p 9f592eb
+#    - git cat-file -p 980a0d5
+  - markdown: |
+      ```{=latex}
+      \note{* parent}
+      \note{* tree not recursive}
+      ```
+
+#- title: semantic equivalence vs. merge commit
+#  multi:
+#  - markdown: |
+#      ```{=latex}
+#      \begin{center}
+#        \begin{tikzpicture}[align=center]
+#          \node (cli) {%
+#            \begin{minipage}{16em}%
+#      ```
+#  - run:
+#    - silent:
+#      - *branched
+##    - git log --all --graph --oneline
+#    - |-
+#      git checkout main
+#      git merge 2a38091 -m 'merge'
+#    - |-
+#      git checkout feature
+#      git merge 7f6e1e2 -m 'merge'
+##    - git log --all --graph --oneline
+#    - git diff --no-index <(git cat-file -p main) <(git cat-file -p feature)
+#  - markdown: |
+#      ```{=latex}
+#            \end{minipage}%
+#          };
+#          \node (c1e9a09) [above right = 3.5em and 15em of cli.center, commit] {\#2};
+#          \node (e0bd6dd) [below = 1em of c1e9a09, commit] {\#1};
+#          \node (7f6e1e2) [above left  = 1em of c1e9a09, commit] {\#3};
+#          \node (2a38091) [above right = 1em of c1e9a09, commit] {\#4};
+#          \node (merge1)  [above = 1em of 7f6e1e2, commit] {merge};
+#          \node (merge2)  [above = 1em of 2a38091, commit] {merge};
+#          \node (main)    [above = 1em of merge1,  branch] {main};
+#          \node (feature) [above = 1em of merge2,  branch] {feature};
+#
+#          %\node (head)    [below right = 2em and 3em of cli.center, head] {HEAD};
+#          %\draw[->] (head) -- (feature);
+#
+#          \draw[->] (main) -- (merge1);
+#          \draw[->] (merge1) -- (2a38091);
+#          \draw[->] (merge1) -- (7f6e1e2);
+#          \draw[->] (7f6e1e2) -- (c1e9a09);
+#          \draw[->] (c1e9a09) -- (e0bd6dd);
+#
+#          \draw[->] (feature) -- (merge2);
+#          \draw[->] (merge2) -- (7f6e1e2);
+#          \draw[->] (merge2) -- (2a38091);
+#          \draw[->] (2a38091) -- (c1e9a09);
+#        \end{tikzpicture}
+#      \end{center}
+#      \vspace*{.5em}
+#      ```
 
 #- run:
 #  - git init .
@@ -570,46 +971,6 @@
 #  - git hash-object -w password.txt
 #  - printf '100644 blob 9f592eb7d58cbfd81f80bb57846e1e7c4c2e4223\tpassword.txt\n' | git mktree
 #  - git commit-tree -m 'initial commit' 0014ced
-
-- title: porcelain vs. plumbing
-  markdown: |
-    ```{=latex}
-    \centering
-    \adjustbox{max width=\linewidth,max totalheight=\textheight}{%
-      \begin{tikzpicture}[align=center]
-        \node (9f592eb)    [blob   ] at (  0  ,  0  ) {blob 9f592eb};
-        \node (index)      [index  ] at (  0  , -4em) {.git/index};
-        \node (0014ced)    [tree   ] at (  0  , -8em) {tree 0014ced};
-        \node (93c9cc0)    [commit ] at (  0  ,-12em) {commit 93c9cc0};
-        \node (main)       [branch ] at (  0  ,-16em) {refs/heads/main};
-        %\node (head)       [head   ] at (  0  ,-20em) {HEAD};
-
-        \node (git-add)    [command] at (-10em,  0  ) {git add};
-        \node (git-commit) [command] at (-10em, -8em) {git commit};
-        \draw[->] (git-add)    -- (731c740);
-        \draw[->] (git-add)    -- (index);
-        \draw[->] (9f592eb)    -- (git-commit);
-        \draw[->] (index)      -- (git-commit);
-        %\draw[->] (head)       -- (git-commit);
-        \draw[->] (git-commit) -- (0014ced);
-        \draw[->] (git-commit) -- (93c9cc0);
-        \draw[->] (git-commit) -- (main);
-
-        \node (git-hash-object) [command] at (10em,  0  ) {git hash-object -w};
-        \node (git-mktree)      [command] at (10em, -8em) {git mktree};
-        \node (git-commit-tree) [command] at (10em,-12em) {git commit-tree};
-        \node (git-update-ref)  [command] at (10em,-16em) {git update-ref};
-        \draw[->] (git-hash-object) -- (731c740);
-        \draw[->] (9f592eb)         -- (git-mktree);
-        \draw[->] (git-mktree)      -- (0014ced);
-        \draw[->] (0014ced)         -- (git-commit-tree);
-        \draw[->] (git-commit-tree) -- (93c9cc0);
-        \draw[->] (93c9cc0)         -- (git-update-ref);
-        \draw[->] (git-update-ref)  -- (main);
-
-      \end{tikzpicture}%
-    }
-    ```
 
 #- title: SHA-256
 #  run: &init-256
@@ -627,48 +988,105 @@
 #  - what-changed
 #  - fold -w 76 .git/objects/loose-object-idx
 
-- markdown: |
+- title: Object Graph
+  markdown: |
     ```{=latex}
-    \resizebox{\linewidth}{!}{%
-      \begin{tikzpicture}[align=center]
-        \node (731c740) [                        commit] {commit 731c740};
-        \node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
-        \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
-        \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
-        \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
-        \node (7f4ea99) [left  = 8em of 731c740, commit] {commit 7f4ea99};
-        \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
-        \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
-        \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
-        \draw[->] (7f4ea99) -- node [fill=white] {tree}         (08baea6);
-        \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
-        \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
-        \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
-        \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
-        \node (head)    [above = 1em of main,    head  ] {HEAD};
-        \draw[->] (head) -- (main);
-        \draw[->] (main) -- (7f4ea99);
-      \end{tikzpicture}%
-    }%
+    \begin{center}
+      \adjustbox{width=\linewidth,max totalheight=\textheight -1.5em}{%
+        \begin{tikzpicture}[align=center]
+          \node (731c740) [                        commit] {commit 731c740};
+          \node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
+          \node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
+          \draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
+          \draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
+          \node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
+          \node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
+          \node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
+          \draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
+          \draw[->] (7f4ea99) -- node [fill=white] {tree}         (08baea6);
+          \draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
+          \draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
+          \draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+      %    \node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
+      %    \node (head)    [above = 1em of main,    head  ] {HEAD};
+      %    \draw[->] (head) -- (main);
+      %    \draw[->] (main) -- (7f4ea99);
+
+          \pause
+
+          \node (c) [right = 2em of 7f4ea99, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \node (d) [right = 2em of c, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \node (e) [right = 2em of d, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \node (f) [above = 2em of c, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \node (g) [below = 2em of d, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \node (h) [above = 2em of d, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \node (i) [right = 7em of g, commit, circle] {\rule{0pt}{.5em}\rule{.5em}{0pt}};
+          \draw[->] (c) -- (7f4ea99);
+          \draw[->] (d) -- (c);
+          \draw[->] (e) -- (d);
+          \draw[->] (f) -- (7f4ea99);
+          \draw[->] (d) -- (f);
+          \draw[->] (g) -- (c);
+          \draw[->] (i) -- (g);
+          \draw[->] (h) -- (f);
+          \node (feature-a) [above = 2em of h, branch] {branch A};
+          \node (main)      [above = 2em of e, branch] {main};
+          \node (feature-b) [above = 2em of i, branch] {branch B};
+          \draw[->] (feature-a) -- (h);
+          \draw[->] (main)      -- (e);
+          \draw[->] (feature-b) -- (i);
+        \end{tikzpicture}%
+      }
+    \end{center}
+
+    \note{* branches}
+    \note{* merge commit}
     ```
 
-- title: What I haven't told you
+- title: Takeaways
   markdown: |
-    * `.git/index`
+    * what Git does under the hood
 
-    * `.git/refs/tags/`
+      * references (branches) `.git/refs/`
+      * object storage `.git/objects/`
 
-    * `.git/refs/remotes/`
+    ```{=latex}
+    \pause
+    ```
 
-    * [`.git/refs/replace/`](https://git-scm.com/docs/git-replace/2.47.2)
+    * based on simple concepts
 
-    * [`.git/log/`](https://git-scm.com/docs/git-config/2.47.2#Documentation/git-config.txt-corelogAllRefUpdates)
+      * simple file format
+      * good abstractions
 
-    * [`.git/objects/pack/`](https://git-scm.com/docs/gitformat-pack/2.47.2)
+    ```{=latex}
+    \pause
+    ```
 
-    * [`.git/worktrees/`](https://git-scm.com/docs/git-worktree/2.47.2)
+    * powerful tool
 
-    * ...
+    ```{=latex}
+    \pause
+    ```
+
+    * What I haven't told you:
+      * `.git/config`
+      * `.git/index`
+      * `.git/refs/tags/`
+      * `.git/refs/remotes/`
+      * [`.git/log/`](https://git-scm.com/docs/git-config/2.47.2#Documentation/git-config.txt-corelogAllRefUpdates)
+      * [`.git/objects/pack/`](https://git-scm.com/docs/gitformat-pack/2.47.2)
+      * [`.git/worktrees/`](https://git-scm.com/docs/git-worktree/2.47.2)
+      * ...
+
+    ```{=latex}
+    \note{* simple format, text-based = Linux}
+    \note{* tree/commit = abstraction}
+    \note{* worktree vs index vs HEAD}
+    \note{* packfiles (inter-file compression)}
+    ```
+
+#      * [`.git/refs/replace/`](https://git-scm.com/docs/git-replace/2.47.2)
 
 #- title: git init --bare
 #  run: &bare

@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+import argparse
+import re
+import sys
+import zlib
+
+
+special_chars = re.compile(rb"[\x00-\x19\x7F]")
+special_repl = {
+    b"\0": b"\x1b[31m\\x00\x1b[39m\n",
+    b"\n": b"\x1b[31m\\n\x1b[39m\n",
+}
+
+
+def write_output(out, buf: bytes) -> None:
+    while True:
+        m = special_chars.search(buf)
+        i = None if m is None else m.start()
+        out.write(buf[:i])
+        if m is None:
+            break
+        out.write(special_repl[m[0]])
+        buf = buf[m.end():]
+
+
+def write_tree(out, buf: bytes) -> None:
+    head, body = buf.split(b"\0", 1)
+    head += b"\0"
+    write_output(out, head)
+    for m in re.finditer(rb"(.*?\0)(.{20})", body, re.DOTALL):
+        write_output(out, m[1])
+        out.write(b"\x1b[31m")
+        for c in m[2]:
+            out.write(("\\x%02X" % c).encode("ascii"))
+        out.write(b"\x1b[39m\n")
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--tree", action="store_true")
+    p.add_argument("-v", action="store_true", required=True)
+    p.add_argument("object")
+    args = p.parse_args()
+
+    with open(args.object, "rb") as fp, open(sys.stdout.fileno(), "wb", closefd=False) as out:
+        if args.tree:
+            write_tree(out, zlib.decompress(fp.read()))
+        else:
+            decomp = zlib.decompressobj()
+            for buf in iter(lambda: fp.read(4096), b""):
+                write_output(out, decomp.decompress(buf))
+            write_output(out, decomp.flush())
