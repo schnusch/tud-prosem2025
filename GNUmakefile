@@ -1,9 +1,12 @@
-.PHONY: all clean
+.PHONY: all clean present
 
 all: build/presentation.pdf build/paper.pdf
 
 clean:
 	$(RM) -r build
+
+present: build/presentation.pdf
+	pdfpc build/presentation.pdf
 
 presentation_attachments = \
 	GNUmakefile \
