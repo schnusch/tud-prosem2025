@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-all: build/presentation.pdf
+all: build/presentation.pdf build/paper.pdf
 
 clean:
 	$(RM) -r build
@@ -30,3 +30,13 @@ build/parts/.done: shell.py commands.yaml
 	touch $@.tmp
 	./shell.py -o $(@D) -i commands.yaml
 	mv $@.tmp $@
+
+paper_attachments = \
+	GNUmakefile \
+	citations.bib \
+	paper.tex \
+	shell.nix
+build/paper.pdf: build/paper-noattach.pdf $(paper_attachments)
+	qpdf build/paper-noattach.pdf $(foreach f,$(paper_attachments),--add-attachment $(f) --) $@
+build/paper-noattach.pdf: paper.tex citations.bib
+	latexmk -g -xelatex -output-directory=$(@D) -jobname=$(@F:.pdf=) paper.tex < /dev/null

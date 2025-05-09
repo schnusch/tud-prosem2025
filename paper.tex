@@ -1,0 +1,425 @@
+\documentclass[
+	nonacm,% omit ACM conference and reference info
+	screen,% enable colors
+	sigplan,
+]{acmart}
+\setcopyright{none}% no copyright notice
+
+\usepackage{adjustbox}% resize figures
+\usepackage{csquotes}% proper quotation marks
+\usepackage{enumitem}% configure enumerate/itemize
+\usepackage{fancyvrb}% embedded code samples
+
+% EBNF diagrams
+\usepackage{naive-ebnf}
+\newenvironment{myebnf}[1][4em]{%
+	\begin{minipage}{.9\linewidth}%
+		% FIXME naive-ebnf seems buggy
+		\expandafter \undef \csname ebnf_curled\endcsname
+		\expandafter \undef \csname ebnf_brackets\endcsname
+		\expandafter \undef \csname ebnf_squares\endcsname
+		\begin{ebnf}[#1]%
+}{%
+		\end{ebnf}%
+	\end{minipage}%
+}
+
+% localization, not part of the approved packages but works anyway
+% https://authors.acm.org/proceedings/production-information/accepted-latex-packages
+\usepackage{polyglossia}
+\setmainlanguage{german}
+\pghyphenation{german}{%
+	git-hooks
+}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,positioning}
+\definecolor{yellow}{HTML}{aa5500}
+\definecolor{cyan}{HTML}{00aaaa}
+\definecolor{green}{HTML}{00aa00}
+\tikzset{%
+	base/.style   = {rectangle, draw=black, text centered, font=\ttfamily},
+	head/.style   = {base,                  fill=cyan!30},
+	branch/.style = {base,                  fill=green!30},
+	commit/.style = {base, rounded corners, fill=yellow!30},
+	tree/.style   = {base, rounded corners, fill=red!30},
+	blob/.style   = {base, rounded corners, fill=gray!30},
+}
+
+\usepackage{hyperref}
+
+\title[Git]{%
+	Git: \enquote{a content-addressable filesystem, used to track directory trees}%
+	\texorpdfstring{ \cite{track-directory-trees}}{}% omit citation in PDF title
+}
+\affiliation{%
+	\institution{Technische Universität Dresden}
+	\city{Dresden}
+	\country{Germany}%
+}
+
+% label below figures and tables
+\floatstyle{plain}
+\restylefloat{figure}
+\renewcommand{\figureautorefname}{Abbildung}
+\restylefloat{table}
+\renewcommand{\tableautorefname}{Tabelle}
+
+% draw box around examples and formats
+\floatstyle{boxed}
+
+\newfloat{example}{thp}{example}
+\floatname{example}{Beispiel}
+\newcommand{\exampleautorefname}{Beispiel}
+
+\newfloat{format}{thp}{format}
+\floatname{format}{Format}
+\newcommand{\formatautorefname}{Format}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Einführung}
+
+Im Bereich der Softwareentwicklung werden Versionsverwaltungstools genutzt, um Quellcode zu verwalten. Mit Versionsverwaltung ist es möglich Änderungen nachzuverfolgen und die gemeinsame Arbeit mehrerer Entwickler zu vereinen.
+
+Bei der Entwicklung des Linux-Kernels kam die verteilte Versionsverwaltung (engl. \emph{Distributed Version Control System}) Bitkeeper zum Einsatz. Verteilte Versionsverwaltung unterscheiden sich von anderen Versionsverwaltung indem es kein zentrales Repository gibt, sondern an alleinstehenden Kopien des Repositories gearbeitet wird und Änderungen nur nach Bedarf zwischen Kopien zusammengeführt werden. Es müssen somit, während ein Entwickler an einer Datei arbeitet, keine Locks oder andere Vermerke \cite{cvs-reserved-checkout} im zentralen Repository angelegt werden, um Kollisionen zu vermeiden.% Dadurch ist ein paralleles Arbeiten an Projekten möglich.
+
+Im Zuge von Lizenzstreitigkeiten stellte Bitkeeper 2005 seine kostenlose Lizenz für  Linux-Kernel-Entwickler ein. \cite{bitkeeper} Damit begannen einige  Linux-Kernel-Entwickler eigene Versionsverwaltungen zu entwickelen, darunter Linus Torvalds, der mit der  Entwicklung von Git begann.% Matt Mackall begann mit der Entwicklung von Mercurial \cite{mercurial-announce}.
+
+Git speichert dazu Verzeichnisbäume in einem \emph{Repository} und verknüpft diese über  \emph{Commits} miteinander, um die Historie der Dateiänderungen darzustellen. Git stellt  verschiedene high- und low-level \cite{plumbing} Kommandozeilenprogramme bereit, um mit einem Git-Repository zu interagieren.
+
+\section{Aufbau eines Git-Repositories}
+
+Ein Git-Repository kann mit dem Befehl \texttt{git init} erstellt werden. Dabei wird das Verzeichnis \texttt{.git/} erstellt und mit den Inhalten aus \autoref{git-init-ls} initialisiert.
+
+\begin{example}
+	\caption{\texttt{.git/} Verzeichnis}%
+	\label{git-init-ls}%
+	\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+\textcolor[HTML]{0000aa}{.git}/
+\textcolor[HTML]{0000aa}{.git/branches}/
+.git/config
+.git/description
+.git/HEAD
+\textcolor[HTML]{0000aa}{.git/hooks}/
+\textcolor[HTML]{00aa00}{.git/hooks/applypatch-msg.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/commit-msg.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/fsmonitor-watchman.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/post-update.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/pre-applypatch.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/pre-commit.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/pre-merge-commit.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/prepare-commit-msg.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/pre-push.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/pre-rebase.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/pre-receive.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/push-to-checkout.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/sendemail-validate.sample}
+\textcolor[HTML]{00aa00}{.git/hooks/update.sample}
+\textcolor[HTML]{0000aa}{.git/info}/
+.git/info/exclude
+\textcolor[HTML]{0000aa}{.git/objects}/
+\textcolor[HTML]{0000aa}{.git/objects/info}/
+\textcolor[HTML]{0000aa}{.git/objects/pack}/
+\textcolor[HTML]{0000aa}{.git/refs}/
+\textcolor[HTML]{0000aa}{.git/refs/heads}/
+\textcolor[HTML]{0000aa}{.git/refs/tags}/
+	\end{Verbatim}
+\end{example}
+
+Dabei werden auch Dateien und Verzeichnisse erstellt, die für die Grundfunktion von Git nicht notwendig sind und bspw. Einstellungen des Repositories speichern oder Hooks \cite{githooks} konfigurieren, die automatisch benutzerdefinierte Aktionen auslösen.
+
+Für die grundlegende Funktion von Git wird lediglich die Verzeichnisstruktur in \autoref{diy-git-init-ls} benötigt.
+
+\begin{example}
+	\caption{Minimales \texttt{.git/} Verzeichnis}%
+	\label{diy-git-init-ls}%
+	\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+\textcolor[HTML]{0000aa}{.git}/
+.git/HEAD
+\textcolor[HTML]{0000aa}{.git/objects}/
+\textcolor[HTML]{0000aa}{.git/refs}/
+	\end{Verbatim}
+\end{example}
+
+\subsection{Objekte}
+
+Dateien, Verzeichnisse, Git-Commits und -Tags werden als Objekte in \texttt{.git/objects/}  gespeichert. Das Format von Objekten ist in \autoref{object-format} beschrieben, \EbnfNonTerminal{content} ist dabei vom jeweiligen Objekttyp \EbnfNonTerminal{type} abhängig. Objekte werden vor dem Ablegen im Dateisystem mit \emph{DEFLATE} \cite{zlib} komprimiert.
+
+\begin{format}
+	\caption{Format von Objekten}%
+	\label{object-format}%
+	\begin{myebnf}[8em]
+		<object> := 'DEFLATE(' <uncompressed> ')' \\
+		<uncompressed> := <type> 'SP' <size> 'NUL' <content> \\
+		<type> := "blob" \\
+			|| "commit" \\
+			|| "tag" \\
+			|| "tree" \\
+		<size> := <decimal> \\
+		<decimal> := "0" \\
+			|| /[1-9][0-9]*/
+	\end{myebnf}
+
+	\vspace{\fboxsep}%
+	\hrule
+	\vspace{\fboxsep}
+
+	\begin{minipage}{\dimexpr \linewidth -2\fboxsep \relax}
+		\EbnfNonTerminal{size} gibt die Anzahl der Bytes in \EbnfNonTerminal{content} als Dezimalzahl an.
+	\end{minipage}
+\end{format}
+
+Die Dateinamen von Objekten werden von deren Inhalt abgeleitet. Dazu wird das unkomprimierte Objekt mit dem SHA-1-Algorithmus \cite{sha1} gehashed. \cite{git-sha1-then-zlib} Aus der hexadezimalen Darstellung des Hashes ergibt sich der Pfad des Objekts. Die ersten 8~Bit des Hashes werden als Unterverzeichnis verwendet. Damit wird vermieden, dass das Verzeichnis \texttt{.git/objects/} übermäßig viele Einträge enthält.
+
+\begin{example}
+	\caption{Inhalt von \texttt{.git/objects/}}%
+	\label{git-objects}%
+	\adjustbox{max width=\linewidth}{%
+		\begin{SaveVerbatim}[commandchars=\\\{\},fontsize=\small]{VerbCode}
+\textcolor[HTML]{0000aa}{.git/objects/58}/
+.git/objects/58/1caa0fe56cf01dc028cc0b089d364993e046b6
+\textcolor[HTML]{0000aa}{.git/objects/73}/
+.git/objects/73/1c74011a7dffa19fc2d56c54b7a3dab250d870
+\textcolor[HTML]{0000aa}{.git/objects/98}/
+.git/objects/98/0a0d5f19a64b4b30a87d4206aade58726b60e3
+		\end{SaveVerbatim}
+		\BUseVerbatim{VerbCode}%
+	}
+\end{example}
+
+\begin{example}
+	\caption{Ein unkomprimiertes Objekt vom Typ \EbnfTerminal{blob}}%
+	\label{blob-example}%
+	\centering
+	\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+blob 13\textcolor[HTML]{aa0000}{{\textbackslash}x00}
+Hello World!\textcolor[HTML]{aa0000}{{\textbackslash}n}
+	\end{Verbatim}
+\end{example}
+
+\sloppy
+Da sich der Pfad des Objektes von dessen Inhalt ableitet, handelt es sich um einen inhaltsadressierbaren Speicher (engl. \emph{content-addressable storage}) \cite{content-addressable-storage}. Solange mit der verwendete Hashfunktionen keine Kollisionen entstehen, sind zwei Objekte identisch genau dann, wenn ihre Pfade identisch sind. Diese Eigenschaft erlaubt es Objekte eines Repositories konfliktfrei in ein anderes Repository einzupflegen. \cite{rsync}
+
+Da es gelungen ist Kollisionen in SHA-1 zu erzeugen, wird in Git mittlerweile auch SHA-256 als Hashalgorithmus unterstützt. \cite{hash-function-transition}
+
+\subsubsection{\texttt{blob}}\label{blob}
+
+Dateien werden als Objekte des Typs \EbnfTerminal{blob} gespeichert, dabei wird der Dateiinhalt als \EbnfNonTerminal{content} verwendet. Symlinks \cite{symlink} werden ebenfalls als \EbnfTerminal{blob} gespeichert, in dem Fall wird dessen Zielpfad als \EbnfNonTerminal{content} verwendet.
+
+\subsubsection{\texttt{tree}}\label{tree}
+
+\sloppy
+Verzeichnisse werden als Objekte des Typs \EbnfTerminal{tree} gespeichert. Die Verzeichniseinträge werden wie in \autoref{tree-syntax} serialisiert und bilden damit den \EbnfNonTerminal{content} des Objektes. Dabei verweisen Kindelemente eines \texttt{tree} durch den SHA-1-Hash auf weitere Objekte in \texttt{.git/objects/}. Um Verzeichnisbäume abzubilden, kann ein \texttt{tree} auf weitere Objekte vom Typ \EbnfTerminal{tree} verweisen.
+
+Die Verzeichniseinträge werden nach ihrem Dateinamen sortiert, damit ein \texttt{tree} eindeutig aus der Liste der Kindelemente generiert wird.
+
+\begin{format}
+	\caption{\EbnfNonTerminal{content} eines \texttt{tree}}%
+	\label{tree-syntax}%
+	\begin{myebnf}[7em]
+		<content> := <child> * \\
+		<child> := <mode> 'SP' <name> 'NUL' <sha1-raw> \\
+		<mode> := /[1-7][0-7]*/ \\
+		<sha1-raw> := /[\textbackslash x00-\textbackslash xFF]\{20\}/
+	\end{myebnf}
+
+	\vspace{\fboxsep}%
+	\hrule
+	\vspace{\fboxsep}
+
+	\begin{minipage}{\dimexpr \linewidth -2\fboxsep \relax}
+		\EbnfNonTerminal{mode} ist der Dateityp \cite{inode} des Kindelements und kann die Werte in \autoref{inode-types} annehmen. \EbnfNonTerminal{name} ist der Dateiname des Kindelements. \EbnfNonTerminal{sha1-raw} ist die byteweise Darstellung des Hashes des Kindelements.
+	\end{minipage}
+\end{format}
+
+\begin{table}[thp]
+	\caption{Dateitypen}%
+	\label{inode-types}%
+	\begin{tabular}{c c l}
+		\hline
+		\EbnfNonTerminal{mode} \cite{inode} & Kindobjekt & Dateityp \\
+		\hline
+		\texttt{ 40000} & \nameref{tree} & Verzeichnis \\
+		\texttt{100644} & \nameref{blob} & nicht-ausführbare Datei \\
+		\texttt{100755} & \nameref{blob} & ausführbare Datei \\
+		\texttt{120000} & \nameref{blob} & Symlink \\
+		\texttt{160000} & \nameref{commit} & Commit (Submodul) \\
+		\hline
+	\end{tabular}%
+	\vspace{-1em}%
+\end{table}
+
+\begin{example}
+	\caption{Ein unkomprimiertes Objekt vom Typ \EbnfTerminal{tree}}%
+	\label{tree-example}%
+	\centering
+	\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+tree 107\textcolor[HTML]{aa0000}{{\textbackslash}x00}
+40000 old\textcolor[HTML]{aa0000}{{\textbackslash}x00}
+\textcolor[HTML]{aa0000}{{\textbackslash}x58{\textbackslash}x1C{\textbackslash}xAA{\textbackslash}x0F{\textbackslash}xE5{\textbackslash}x6C{\textbackslash}xF0{\textbackslash}x1D{\textbackslash}xC0{\textbackslash}x28{\textbackslash}xCC{\textbackslash}x0B{\textbackslash}x08}
+\textcolor[HTML]{aa0000}{{\textbackslash}x9D{\textbackslash}x36{\textbackslash}x49{\textbackslash}x93{\textbackslash}xE0{\textbackslash}x46{\textbackslash}xB6}
+100644 password.txt\textcolor[HTML]{aa0000}{{\textbackslash}x00}
+\textcolor[HTML]{aa0000}{{\textbackslash}x9F{\textbackslash}x59{\textbackslash}x2E{\textbackslash}xB7{\textbackslash}xD5{\textbackslash}x8C{\textbackslash}xBF{\textbackslash}xD8{\textbackslash}x1F{\textbackslash}x80{\textbackslash}xBB{\textbackslash}x57{\textbackslash}x84}
+\textcolor[HTML]{aa0000}{{\textbackslash}x6E{\textbackslash}x1E{\textbackslash}x7C{\textbackslash}x4C{\textbackslash}x2E{\textbackslash}x42{\textbackslash}x23}
+100644 world.txt\textcolor[HTML]{aa0000}{{\textbackslash}x00}
+\textcolor[HTML]{aa0000}{{\textbackslash}x98{\textbackslash}x0A{\textbackslash}x0D{\textbackslash}x5F{\textbackslash}x19{\textbackslash}xA6{\textbackslash}x4B{\textbackslash}x4B{\textbackslash}x30{\textbackslash}xA8{\textbackslash}x7D{\textbackslash}x42{\textbackslash}x06}
+\textcolor[HTML]{aa0000}{{\textbackslash}xAA{\textbackslash}xDE{\textbackslash}x58{\textbackslash}x72{\textbackslash}x6B{\textbackslash}x60{\textbackslash}xE3}
+	\end{Verbatim}
+\end{example}
+
+\subsubsection{\texttt{commit}}\label{commit}
+
+Git-Commits werden als Objekte des Typs \EbnfTerminal{commit} gespeichert. Dabei kommt ein textbasiertes Format zum Einsatz. Jeder Commit verweist mit dem Feld \EbnfTerminal{tree} auf genau einen Verzeichnisbaum. Commits können durch die Felder \EbnfTerminal{parent} miteinander verknüpft werden. Ein Commit kann dabei 0 oder beliebig viele Eltern-Commits besitzen. Hat ein Commit zwei oder mehr Eltern-Commits, spricht man von einem Merge-Commit.
+
+Zusätzlich erhält ein Commit Author- und Committer-\hspace{0pt}Informationen sowie die Commit-Nachricht. Das Feld \EbnfTerminal{author} enthält Informationen zum Originalauthor und -zeitpunkt des Commits und das Feld \EbnfTerminal{committer} zum Nutzer und Zeitpunkt der letzten Nachbearbeitung. \EbnfNonTerminal{timestamp} ist dabei ein UNIX-\hspace{0pt}Zeitstempel in Dezimalform und \EbnfNonTerminal{timezone} die dazugehörige Zeitzone.
+
+Die Reihenfolge der Felder ist fest vorgegeben, damit Commits eindeutig serialisiert werden. Die Reihenfolge der Eltern-Commits ist dabei aber nicht bestimmt, ändert sich also diese Reihenfolge in einem Merge-Commits entsteht ein neuer Commit.
+
+\begin{format}
+	\caption{\EbnfNonTerminal{content} eines \texttt{commit}}%
+	\label{commit-syntax}%
+	\begin{myebnf}[7.5em]
+		<content> := "tree" 'SP' <sha1-hex> 'LF' \\
+		\null\hspace{7.5em} ( "parent" 'SP' <sha1-hex> 'LF' ) * \\
+		\null\hspace{7.5em} "author" 'SP' <user-email> 'SP' \\
+		\null\hspace{7.5em} <timestamp> 'SP' <timezone> 'LF' \\
+		\null\hspace{7.5em} "committer" 'SP' <user-email> 'SP' \\
+		\null\hspace{7.5em} <timestamp> 'SP' <timezone> 'LF' \\
+		\null\hspace{7.5em} <extra-headers> \\
+		\null\hspace{7.5em} 'LF' \\
+		\null\hspace{7.5em} <message> \\
+		<sha1-hex> := /[0-9a-f]\{40\}/ \\
+		<user-email> := <username> 'SP' "<" <email> ">"
+		<timestamp> := <decimal> \\
+		<timezone> := ("+" | "-") /[0-9]\{4\}/
+		<extra-headers> := <header-name> 'SP' \\
+		\null\hspace{7.5em} <header-value> 'LF'
+	\end{myebnf}
+\end{format}
+
+\begin{example}
+	\caption{Ein unkomprimiertes Objekt vom Typ \EbnfTerminal{commit}}%
+	\label{commit-example}%
+	\centering
+	\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+commit 201\textcolor[HTML]{aa0000}{{\textbackslash}x00}
+tree 581caa0fe56cf01dc028cc0b089d364993e046b6\textcolor[HTML]{aa0000}{{\textbackslash}n}
+author schnusch <schnusch@users.noreply.github.com> 3
+15532800 +0100\textcolor[HTML]{aa0000}{{\textbackslash}n}
+committer schnusch <schnusch@users.noreply.github.com
+> 315532800 +0100\textcolor[HTML]{aa0000}{{\textbackslash}n}
+\textcolor[HTML]{aa0000}{{\textbackslash}n}
+initial commit\textcolor[HTML]{aa0000}{{\textbackslash}n}
+	\end{Verbatim}
+\end{example}
+
+\subsubsection{\texttt{tag}}\label{tag}
+
+Ein Tag ist ein Objekt, dass auf ein anderes Objekt verweist. Damit können weitere Informationen mit einem Objekt verknüpft werden, bspw. können Commits mit einer Veröffentlichungsversion beschriftet werden.
+
+Das Format ähnelt dem eines \texttt{commit}, jedoch kommen andere Datenfelder zum Einsatz.
+
+\begin{format}
+	\caption{\EbnfNonTerminal{content} eines \texttt{tag}}%
+	\label{tag-syntax}%
+	\begin{myebnf}[6.5em]
+		<content> := "object" 'SP' <sha1-hex> 'LF' \\
+		\null\hspace{6.5em} "type" 'SP' <type> 'LF' \\
+		\null\hspace{6.5em} "tag" 'SP' <tag-name> 'LF' \\
+		\null\hspace{6.5em} "tagger" 'SP' <user-email> 'SP' \\
+		\null\hspace{6.5em} <timestamp> 'SP' <timezone> 'LF' \\
+		\null\hspace{6.5em} 'LF' \\
+		\null\hspace{6.5em} <message>
+	\end{myebnf}
+\end{format}
+
+\subsection{Referenzen}\label{ref}
+
+\sloppy
+Beim Verwenden von Git werden Referenzen im Ordner \texttt{.git/refs/} erstellt. Referenzen sind einfache Textdateien, die auf Objekte im Git-Repostiory verweisen (bspw. \texttt{refs/heads/main} in \autoref{refs/heads/main}) und ermöglichen es damit diese Objekte durch menschenlesbare Namen zu erreichen. \cite{git-references}
+
+\begin{example}
+	\caption{Inhalt von \texttt{.git/refs/heads/main}}%
+	\label{refs/heads/main}%
+	\centering
+	\small
+	\texttt{731c74011a7dffa19fc2d56c54b7a3dab250d870}
+\end{example}
+
+Üblicherweise werden in Git solche Referenzen genutzt, um auf einzelne Entwicklungszweige (engl. \emph{branch}) zu verweisen. Unter verschiedenen Referenzen können damit unterschiedliche Änderungen verfolgt werden. Diese Referenzen werden üblicherweise in \texttt{.git/refs/heads/} abgelegt.
+
+\texttt{git init} erstellt mit \texttt{.git/HEAD} bereits eine solche Referenz. \texttt{.git/HEAD} nimmt eine Sonderrole in einem Git-Repository ein, da es von vielen Git-Befehlen implizit als Standardreferenz verwendet wird. Zusätzlich kann es sich dabei um eine symbolische Referenz handeln. In dem Fall verweist \texttt{.git/HEAD} nicht direkt auf ein Objekt im Git-Repository, sondern stattdessen auf eine andere Referenz, z.\,B. auf den Branch \texttt{main} in \autoref{git-head}, und Git nimmt dann Änderungen an dieser Referenz vor.
+
+\begin{example}
+	\caption{Inhalt von \texttt{.git/HEAD}}
+	\label{git-head}%
+	\centering
+	\small
+	\texttt{ref: refs/heads/main}
+\end{example}
+
+\section{Objektgraph}
+
+Objekte vom Typ \EbnfTerminal{commit}, \EbnfTerminal{tag} oder \EbnfTerminal{tree} verweisen auf andere Objekte. Damit lässt sich aus Objekten ein gerichter azyklischer Graph (engl. \emph{directed acyclic graph}) konstruieren.
+
+Wenn an Dateien und Verzeichnissen keine Änderungen vorgenommen werden, ergeben sich die gleichen Objekte und damit auch der selbe Pfad im Objektspeicher, Objekte werden somit automatisch dedupliziert.
+
+In \autoref{object-graph} ist ein Objektgraph dargestellt, bei dem der Branch \enquote{main} zwei Commits enthält. Der Commit \texttt{7f4ea99} enthält dabei die folgenden drei Dateien:
+
+\begin{itemize}[beginpenalty=9000]
+\item
+	\texttt{old/hello.txt}
+\item
+	\texttt{password.txt}
+\item
+	\texttt{world.txt}
+\end{itemize}
+
+Da die Dateien \texttt{old/hello.txt} und \texttt{world.txt} identisch sind, verweisen beide auf das selbe Objekt und es werden insgesamt nur zwei Objekte vom Typ \EbnfTerminal{blob} abgelegt.
+
+\begin{figure}[thp]
+	\caption{Verknüpfung der Objekte untereinander}%
+	\label{object-graph}%
+	\resizebox{\linewidth}{!}{%
+		\begin{tikzpicture}[align=center]
+			\node (731c740) [                        commit] {commit 731c740};
+			\node (581caa0) [below = 3em of 731c740, tree  ] {tree 581caa0};
+			\node (980a0d5) [below = 3em of 581caa0, blob  ] {blob 980a0d5};
+			\draw[->] (731c740) -- node [fill=white] {tree} (581caa0);
+			\draw[->] (581caa0) -- node [fill=white] {hello.txt} (980a0d5);
+			\node (7f4ea99) [right = 8em of 731c740, commit] {commit 7f4ea99};
+			\node (08baea6) [below = 3em of 7f4ea99, tree  ] {tree 08baea6};
+			\node (9f592eb) [below = 3em of 08baea6, blob  ] {blob 9f592eb};
+			\draw[->] (7f4ea99) -- node [fill=white] {parent}       (731c740);
+			\draw[->] (7f4ea99) -- node [fill=white] {tree}         (08baea6);
+			\draw[->] (08baea6) -- node [fill=white] {password.txt} (9f592eb);
+			\draw[->] (08baea6) -- node [fill=white] {world.txt}    (980a0d5);
+			\draw[->] (08baea6) -- node [fill=white] {old}          (581caa0);
+			\node (main)    [above = 1em of 7f4ea99, branch] {refs/heads/main};
+			\node (head)    [above = 1em of main,    head  ] {HEAD};
+			\draw[->] (head) -- (main);
+			\draw[->] (main) -- (7f4ea99);
+		\end{tikzpicture}%
+	}%
+\end{figure}
+
+Jeder Objektgraph erfüllt die Eigenschaft eines Hash-Baums (engl. \emph{Merkle tree}) \cite{merkle}. Da Verweise auf andere Objekt über deren Hashwerte implementiert sind, enthällt jedes Objekt notwendigerweise die Hashes dieser Objekte.
+
+\section{Schlussfolgerungen zur Git-Architektur}
+
+Auch wenn die zugrunde liegende Architektur bei der alltäglichen Nutzung selten direkt sichtbar wird, bildet sie eine solide Grundlage. Insbesondere der Objektspeicher ermöglicht einen performanten Zugriff auf das Repository ohne jegliches Locking. Lediglich beim Schreiben von \nameref{ref} müssen gleichzeitige Zugriffe ausgeschlossen werden. Zusammen mit den alleinstehenden Kopien eines verteilten Versionsverwaltungssystems ist somit ein hochgradig parallelisiertes Arbeiten möglich.
+
+Da jeder Nutzer mit einer alleinstehende Kopie des Repositories arbeitet, ist die Arbeit offline möglich und die Ausfallsicherheit wird erhöht. Ebenso ermöglicht es Projekte -- in sogenannte Forks -- leicht abzuspalten.
+
+Der Objektgraph stellt eine effiziente Weise dar, Objekte des Repositories miteinander zu verknüpfen und bietet nützliche Abstraktionen. Der darin integrierte Hash-Baum ermöglicht es, ohne Zusatzinformationen die Integrität zu überprüfen.
+
+Diese Grundsteine zusammen mit einer umfangreichen Sammlung an Werkzeugen, die sowohl interaktiven als auch nicht-interaktiven Zugriff ermöglichen, haben Git dazu verholfen die meistgenutzten Versionsverwaltung zu werden. \cite{git-popularity}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{citations}
+\end{document}
