@@ -36,11 +36,15 @@ def write_tree(out, buf: bytes) -> None:
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("--tree", action="store_true")
-    p.add_argument("-v", action="store_true", required=True)
+    p = argparse.ArgumentParser(description="Dump a zlib compressed file to stdout.")
+    p.add_argument("--tree", action="store_true", help="<object> is a git tree")
+    p.add_argument(
+        "-v", action="store_true", required=True, help="escape non-printable characters"
+    )
     p.add_argument("object")
     args = p.parse_args()
+
+    assert args.v, "non-verbose not implemented"
 
     with open(args.object, "rb") as fp, open(sys.stdout.fileno(), "wb", closefd=False) as out:
         if args.tree:

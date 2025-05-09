@@ -24,8 +24,12 @@ def get_info(path):
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("-s", action="store_true")
+    p = argparse.ArgumentParser(
+        description="Compare the local directory to or write the snapshot `../files.json`."
+    )
+    p.add_argument(
+        "-s", action="store_true", help="write the snapshot file `../files.json`"
+    )
     args = p.parse_args()
 
     info = []
